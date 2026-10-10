@@ -1347,17 +1347,6 @@ The checklist should be updated as features are implemented and verified.
 
 **Development Model:** Collaborative team development using Git and GitHub.
 
----
-
-## Conclusion
-
-nestleERP is being developed as a collaborative mini eCommerce MVP focused on product management and product discovery.
-
-The project emphasizes practical full-stack development, clear application separation, role-based access, effective search functionality, and structured collaboration through version control and Pull Requests.
-
-All team members are encouraged to follow the agreed development workflow, communicate effectively, and prioritize the successful delivery of the core MVP requirements.
-
-
 ## API Documentation
 
 The NestleERP backend provides a REST API for product discovery, product management, authentication, and role-based user management.
@@ -1367,7 +1356,13 @@ The project's primary capstone requirement is **Topic 25 — Search API: Search 
 ### Local API
 
 ```text
-https://nestleerp-search-api.onrender.com/
+http://localhost:8080
+```
+
+### Frontend url
+
+```text
+https://nestleerp-search.vercel.app/
 ```
 
 ### Interactive Swagger Documentation
@@ -1422,12 +1417,12 @@ Supported query parameters:
 | `sortBy` | Field used for sorting | `price` |
 | `sortOrder` | `asc` or `desc` | `asc` |
 | `page` | Page number | `1` |
-| `limit` | Results per page, maximum 100 | `10` |
+| `limit` | Results per page, maximum 100 | `12` |
 
 Example:
 
 ```http
-GET /api/products?search=Milo&category=Beverages&minPrice=1000&maxPrice=5000&sortBy=price&sortOrder=asc&page=1&limit=10
+GET /api/products?search=Milo&category=Beverages&minPrice=1000&maxPrice=5000&sortBy=price&sortOrder=asc&page=1&limit=12
 ```
 
 Example successful response:
@@ -1530,3 +1525,13 @@ npm test
 ```
 
 Current automated coverage includes the health endpoint, unknown routes, product search, product-ID search, category filtering, price filtering, sorting, pagination, combined search/filter/sort/pagination, empty result sets, and invalid query parameters.
+
+---
+
+## Conclusion
+
+nestleERP is being developed as a collaborative mini eCommerce MVP focused on product management and product discovery.
+
+The project emphasizes practical full-stack development, clear application separation, role-based access, effective search functionality, and structured collaboration through version control and Pull Requests.
+
+All team members are encouraged to follow the agreed development workflow, communicate effectively, and prioritize the successful delivery of the core MVP requirements.
