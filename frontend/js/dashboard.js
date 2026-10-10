@@ -57,12 +57,21 @@ const roleSelect = document.querySelector("#role-select");
 const roleSaveButton = document.querySelector("#role-save");
 const roleDialogClose = document.querySelector("#role-dialog-close");
 const roleCancel = document.querySelector("#role-cancel");
-const changePasswordOpen = document.querySelector( "#change-password-open",);
-const changePasswordDialog = document.querySelector("#change-password-dialog",);
-const changePasswordForm = document.querySelector( "#change-password-form", );
-const changePasswordClose = document.querySelector( "#change-password-close",);
-const changePasswordCancel = document.querySelector( "#change-password-cancel",);
-const changePasswordSave = document.querySelector( "#change-password-save",);
+const changePasswordOpen = document.querySelector("#change-password-open");
+const changePasswordDialog = document.querySelector("#change-password-dialog");
+const changePasswordForm = document.querySelector("#change-password-form");
+const changePasswordClose = document.querySelector("#change-password-close");
+const changePasswordCancel = document.querySelector("#change-password-cancel");
+const changePasswordSave = document.querySelector("#change-password-save");
+
+const editUserDialog = document.querySelector("#edit-user-dialog");
+const editUserForm = document.querySelector("#edit-user-form");
+const editUserId = document.querySelector("#edit-user-id");
+const editUserFirstName = document.querySelector("#edit-user-first-name");
+const editUserLastName = document.querySelector("#edit-user-last-name");
+const editUserEmail = document.querySelector("#edit-user-email");
+const editUserRole = document.querySelector("#edit-user-role");
+const editUserSave = document.querySelector("#edit-user-save");
 
 
 let users = [];
@@ -402,6 +411,40 @@ function setGeneratedStaffPassword() {
     staffTemporaryPassword.value = generateTemporaryPassword();
   }
 }
+
+function openEditUserDialog(user) {
+  if (!hasRole(SUPER_ADMIN_ROLE)) {
+    showPageMessage(
+      "Only a Super Admin can edit user accounts.",
+      {
+        type: "error",
+        container: dashboardMessage,
+      }
+    );
+    return;
+  }
+
+  editUserId.value = user.id;
+  editUserFirstName.value = user.firstName ?? "";
+  editUserLastName.value = user.lastName ?? "";
+  editUserEmail.value = user.email ?? "";
+  editUserRole.value = user.role ?? "user";
+
+  editUserDialog.showModal();
+}
+
+function closeEditUserDialog() {
+  editUserDialog.close();
+}
+
+document
+  .querySelector("#edit-user-close")
+  .addEventListener("click", closeEditUserDialog);
+
+document
+  .querySelector("#edit-user-cancel")
+  .addEventListener("click", closeEditUserDialog);
+
 
 function openCreateStaffDialog() {
   if (!hasRole(SUPER_ADMIN_ROLE)) {
