@@ -1257,6 +1257,23 @@ exports.updateUser = async (req, res) => {
     }
 
     // =====================================
+    // PASSWORD (Super Admin may reset any account password,
+    // including their own, from the protected dashboard.)
+    // =====================================
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "password") && req.body.password) {
+      if (!isValidPassword(req.body.password)) {
+        return res.status(400).json({
+          success: false,
+          message: PASSWORD_MESSAGE,
+          data: null,
+        });
+      }
+      updateData.password = await bcrypt.hash(req.body.password, 10);
+      updateData.passwordChangedAt = new Date();
+    }
+
+    // =====================================
     // ROLE
     // =====================================
 

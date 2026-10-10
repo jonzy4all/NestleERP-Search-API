@@ -46,10 +46,7 @@ router.post(
 router.patch(
   "/change-password",
   authenticate,
-  authorize(
-    "inventory-manager",
-    "super-admin",
-  ),
+  authorize("super-admin", "inventory-manager"),
   userController.changePassword,
 );
 

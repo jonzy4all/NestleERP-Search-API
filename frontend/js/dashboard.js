@@ -262,6 +262,13 @@ function renderStaffTable() {
           <button
             class="dashboard-table__action"
             type="button"
+            data-edit-user-id="${escapeHtml(user._id)}"
+          >
+            Edit user
+          </button>
+          <button
+            class="dashboard-table__action"
+            type="button"
             data-role-user-id="${escapeHtml(user._id)}"
             ${isCurrentAccount ? "disabled title=\"You cannot change your own role from this screen.\"" : ""}
           >
@@ -636,9 +643,49 @@ async function deleteUser(userId) {
   }
 }
 
+async function editUser(userId) {
+  if (!hasRole(SUPER_ADMIN_ROLE)) {
+    showPageMessage("Only a Super Admin can update user accounts.", { type: "error", container: dashboardMessage });
+    return;
+  }
+  const user = users.find((item) => item._id === userId);
+  if (!user) return;
+
+  const firstName = window.prompt("First name:", user.firstName || "");
+  if (firstName === null) return;
+  const lastName = window.prompt("Last name:", user.lastName || "");
+  if (lastName === null) return;
+  const email = window.prompt("Email address:", user.email || "");
+  if (email === null) return;
+  const phone = window.prompt("Full phone number including country code (e.g. +2348012345678):", user.phone || "");
+  if (phone === null) return;
+  const location = window.prompt(`Location (choose a valid Nigerian state/FCT value):\n${NIGERIA_STATES.join(", ")}`, user.location || "");
+  if (location === null) return;
+  const address = window.prompt("Address:", user.address || "");
+  if (address === null) return;
+  const password = window.prompt("New password (leave blank to keep current password; 12–30 chars with uppercase, lowercase, number and special character):", "");
+  if (password === null) return;
+
+  const payload = { firstName, lastName, email, phone, location, address };
+  if (password.trim()) payload.password = password;
+  try {
+    const response = await apiRequest(userEndpoint(userId), { method: "PUT", requiresAuth: true, body: payload });
+    showPageMessage(response?.message || "User account updated successfully.", { type: "success", container: dashboardMessage });
+    await loadStaff();
+  } catch (error) {
+    showPageMessage(error instanceof ApiError ? error.message : "Unable to update the user account.", { type: "error", container: dashboardMessage });
+  }
+}
+
 function handleStaffAction(event) {
+  const editButton = event.target.closest("[data-edit-user-id]");
   const roleButton = event.target.closest("[data-role-user-id]");
   const deleteButton = event.target.closest("[data-delete-user-id]");
+
+  if (editButton) {
+    editUser(editButton.dataset.editUserId);
+    return;
+  }
 
   if (roleButton && !roleButton.disabled) {
     openRoleDialog(roleButton.dataset.roleUserId);
@@ -715,6 +762,13 @@ async function changePassword(
   event,
 ) {
   event.preventDefault();
+  if (!hasRole(SUPER_ADMIN_ROLE, INVENTORY_MANAGER_ROLE)) {
+  showPageMessage("You are not authorized to change your password.", {
+    type: "error",
+    container: dashboardMessage
+  });
+  return;
+}
 
   const payload =
     Object.fromEntries(
