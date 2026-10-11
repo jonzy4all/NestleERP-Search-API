@@ -178,8 +178,18 @@ function renderRoleSummary() {
 async function loadProductSummary() {
   try {
     const response = await api.products.list();
-    const products = Array.isArray(response?.products) ? response.products : [];
-    productCount.textContent = products.length.toLocaleString();
+    // The API wraps results in data and paginates the product list.
+    // Use totalItems for the complete inventory, not the current page length.
+    const totalItems = response?.data?.pagination?.totalItems;
+    const products = response?.data?.products ?? response?.products;
+    const count = Number.isFinite(Number(totalItems))
+      ? Number(totalItems)
+      : Array.isArray(products)
+        ? products.length
+        : null;
+
+    productCount.textContent =
+      count === null ? "—" : count.toLocaleString();
   } catch (error) {
     productCount.textContent = "—";
 
@@ -842,7 +852,7 @@ async function changePassword(
   event,
 ) {
   event.preventDefault();
-  if (!hasRole(SUPER_ADMIN_ROLE, INVENTORY_MANAGER_ROLE)) {
+  if (!hasRole(SUPER_ADMIN_ROLE, APP_CONFIG.roles.inventoryManager)) {
   showPageMessage("You are not authorized to change your password.", {
     type: "error",
     container: dashboardMessage
@@ -920,14 +930,21 @@ async function changePassword(
   }
 }
 
-changePasswordOpen
-  ?.addEventListener(
-    "click",
-    () => {
-      changePasswordDialog
-        .showModal();
-    },
-  );
+changePasswordOpen?.addEventListener("click", () => {
+  if (!changePasswordDialog) {
+    showPageMessage("The change-password dialog could not be found on this page.", {
+      type: "error",
+      container: dashboardMessage,
+    });
+    return;
+  }
+
+  if (typeof changePasswordDialog.showModal === "function") {
+    changePasswordDialog.showModal();
+  } else {
+    changePasswordDialog.setAttribute("open", "");
+  }
+});
 
 
 changePasswordForm

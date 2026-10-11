@@ -830,67 +830,37 @@ import { api } from "./api.js";
           </div>
         `;
 
+    const detailsUrl = `product-details.html?id=${encodeURIComponent(product.id)}`;
+
     return `
-      <a
-        class="card"
-        href="product-details.html?id=${encodeURIComponent(
-          product.id,
-        )}"
-      >
+      <article class="card">
+        <a class="card-media-link" href="${detailsUrl}" aria-label="View ${escapeHtml(product.name)} details">
+          <div class="card-media">
+            ${media}
+            ${stockBadge(product)}
+          </div>
+        </a>
 
-        <div
-          class="card-media"
-        >
-          ${media}
-
-          ${stockBadge(
-            product,
-          )}
-        </div>
-
-        <div
-          class="card-body"
-        >
-          <h2
-            class="card-title"
-          >
-            ${escapeHtml(
-              product.name,
-            )}
+        <div class="card-body">
+          <h2 class="card-title" title="${escapeHtml(product.name)}">
+            ${escapeHtml(product.name)}
           </h2>
 
-          <p
-            class="card-cat"
-          >
-            ${escapeHtml(
-              product.category,
-            )}
+          <p class="card-cat" title="${escapeHtml(product.category)}">
+            ${escapeHtml(product.category)}
           </p>
 
-          ${
-            product.description
-              ? `
-                <p
-                  class="card-desc"
-                >
-                  ${escapeHtml(
-                    product.description,
-                  )}
-                </p>
-              `
-              : ""
-          }
-
-          <p
-            class="card-price"
-          >
-            ${formatPrice(
-              product.price,
-            )}
+          <p class="card-desc" title="${escapeHtml(product.description || "")}">
+            ${escapeHtml(product.description || "No description available.")}
           </p>
+
+          <p class="card-price">
+            ${formatPrice(product.price)}
+          </p>
+
+          <a class="btn card-details-btn" href="${detailsUrl}">View Details</a>
         </div>
-
-      </a>
+      </article>
     `;
   }
 
