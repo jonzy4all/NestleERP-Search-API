@@ -70,7 +70,10 @@ const editUserId = document.querySelector("#edit-user-id");
 const editUserFirstName = document.querySelector("#edit-user-first-name");
 const editUserLastName = document.querySelector("#edit-user-last-name");
 const editUserEmail = document.querySelector("#edit-user-email");
-const editUserRole = document.querySelector("#edit-user-role");
+const editUserPhone = document.querySelector("#edit-user-phone");
+const editUserLocation = document.querySelector("#edit-user-location");
+const editUserAddress = document.querySelector("#edit-user-address");
+const editUserPassword = document.querySelector("#edit-user-password");
 const editUserSave = document.querySelector("#edit-user-save");
 
 
@@ -341,29 +344,25 @@ async function loadStaff() {
   }
 }
 
-function populateStaffLocations() {
-  if (!staffLocation) {
-    return;
-  }
-
-  const placeholder = staffLocation.querySelector('option[value=""]');
-  staffLocation.replaceChildren();
-
-  if (placeholder) {
-    staffLocation.appendChild(placeholder);
-  } else {
-    const option = document.createElement("option");
-    option.value = "";
-    option.textContent = "Select state / FCT";
-    staffLocation.appendChild(option);
-  }
+function populateLocationSelect(select, placeholderText) {
+  if (!select) return;
+  select.replaceChildren();
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = placeholderText;
+  select.appendChild(placeholder);
 
   NIGERIA_STATES.forEach((state) => {
     const option = document.createElement("option");
     option.value = state;
     option.textContent = state;
-    staffLocation.appendChild(option);
+    select.appendChild(option);
   });
+}
+
+function populateStaffLocations() {
+  populateLocationSelect(staffLocation, "Select state / FCT");
+  populateLocationSelect(editUserLocation, "Select state / FCT");
 }
 
 function randomCharacter(characters) {
@@ -414,37 +413,54 @@ function setGeneratedStaffPassword() {
 
 function openEditUserDialog(user) {
   if (!hasRole(SUPER_ADMIN_ROLE)) {
-    showPageMessage(
-      "Only a Super Admin can edit user accounts.",
-      {
-        type: "error",
-        container: dashboardMessage,
-      }
-    );
+    showPageMessage("Only a Super Admin can edit user accounts.", {
+      type: "error",
+      container: dashboardMessage,
+    });
     return;
   }
+  if (!user || !editUserDialog || !editUserForm) return;
 
-  editUserId.value = user.id;
+  editUserForm.reset();
+  editUserId.value = user._id || user.id || "";
   editUserFirstName.value = user.firstName ?? "";
   editUserLastName.value = user.lastName ?? "";
   editUserEmail.value = user.email ?? "";
-  editUserRole.value = user.role ?? "user";
+  editUserPhone.value = user.phone ?? "";
+  editUserAddress.value = user.address ?? "";
+  editUserPassword.value = "";
 
-  editUserDialog.showModal();
+  if (editUserLocation) {
+    const currentLocation = user.location ?? "";
+    if (currentLocation && ![...editUserLocation.options].some((option) => option.value === currentLocation)) {
+      const option = document.createElement("option");
+      option.value = currentLocation;
+      option.textContent = currentLocation;
+      editUserLocation.appendChild(option);
+    }
+    editUserLocation.value = currentLocation;
+  }
+
+  if (typeof editUserDialog.showModal === "function") {
+    editUserDialog.showModal();
+  } else {
+    showPageMessage("Your browser does not support this dialog. Please use an up-to-date browser.", {
+      type: "error",
+      container: dashboardMessage,
+    });
+  }
 }
 
 function closeEditUserDialog() {
-  editUserDialog.close();
+  if (editUserDialog?.open) editUserDialog.close();
 }
 
-document
-  .querySelector("#edit-user-close")
-  .addEventListener("click", closeEditUserDialog);
-
-document
-  .querySelector("#edit-user-cancel")
-  .addEventListener("click", closeEditUserDialog);
-
+document.querySelector("#edit-user-close")?.addEventListener("click", closeEditUserDialog);
+document.querySelector("#edit-user-cancel")?.addEventListener("click", closeEditUserDialog);
+editUserDialog?.addEventListener("click", (event) => {
+  if (event.target === editUserDialog) closeEditUserDialog();
+});
+editUserForm?.addEventListener("submit", saveEditedUser);
 
 function openCreateStaffDialog() {
   if (!hasRole(SUPER_ADMIN_ROLE)) {
@@ -686,37 +702,57 @@ async function deleteUser(userId) {
   }
 }
 
-async function editUser(userId) {
+async function saveEditedUser(event) {
+  event.preventDefault();
+
   if (!hasRole(SUPER_ADMIN_ROLE)) {
-    showPageMessage("Only a Super Admin can update user accounts.", { type: "error", container: dashboardMessage });
+    showPageMessage("Only a Super Admin can update user accounts.", {
+      type: "error",
+      container: dashboardMessage,
+    });
     return;
   }
-  const user = users.find((item) => item._id === userId);
-  if (!user) return;
 
-  const firstName = window.prompt("First name:", user.firstName || "");
-  if (firstName === null) return;
-  const lastName = window.prompt("Last name:", user.lastName || "");
-  if (lastName === null) return;
-  const email = window.prompt("Email address:", user.email || "");
-  if (email === null) return;
-  const phone = window.prompt("Full phone number including country code (e.g. +2348012345678):", user.phone || "");
-  if (phone === null) return;
-  const location = window.prompt(`Location (choose a valid Nigerian state/FCT value):\n${NIGERIA_STATES.join(", ")}`, user.location || "");
-  if (location === null) return;
-  const address = window.prompt("Address:", user.address || "");
-  if (address === null) return;
-  const password = window.prompt("New password (leave blank to keep current password; 12–30 chars with uppercase, lowercase, number and special character):", "");
-  if (password === null) return;
+  const userId = editUserId.value;
+  if (!userId) {
+    showPageMessage("Select a user before saving changes.", {
+      type: "error",
+      container: dashboardMessage,
+    });
+    return;
+  }
 
-  const payload = { firstName, lastName, email, phone, location, address };
+  const payload = {
+    firstName: editUserFirstName.value.trim(),
+    lastName: editUserLastName.value.trim(),
+    email: editUserEmail.value.trim(),
+    phone: editUserPhone.value.trim(),
+    location: editUserLocation.value,
+    address: editUserAddress.value.trim(),
+  };
+  const password = editUserPassword.value;
   if (password.trim()) payload.password = password;
+
+  setButtonLoading(editUserSave, true, "Saving...");
   try {
-    const response = await apiRequest(userEndpoint(userId), { method: "PUT", requiresAuth: true, body: payload });
-    showPageMessage(response?.message || "User account updated successfully.", { type: "success", container: dashboardMessage });
+    const response = await apiRequest(userEndpoint(userId), {
+      method: "PUT",
+      requiresAuth: true,
+      body: payload,
+    });
+    closeEditUserDialog();
+    showPageMessage(response?.message || "User account updated successfully.", {
+      type: "success",
+      container: dashboardMessage,
+    });
     await loadStaff();
   } catch (error) {
-    showPageMessage(error instanceof ApiError ? error.message : "Unable to update the user account.", { type: "error", container: dashboardMessage });
+    showPageMessage(
+      error instanceof ApiError ? error.message : "Unable to update the user account.",
+      { type: "error", container: dashboardMessage },
+    );
+  } finally {
+    setButtonLoading(editUserSave, false);
   }
 }
 
@@ -726,7 +762,8 @@ function handleStaffAction(event) {
   const deleteButton = event.target.closest("[data-delete-user-id]");
 
   if (editButton) {
-    editUser(editButton.dataset.editUserId);
+    const user = users.find((item) => item._id === editButton.dataset.editUserId);
+    openEditUserDialog(user);
     return;
   }
 
